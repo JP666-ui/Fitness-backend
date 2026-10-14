@@ -1,0 +1,58 @@
+server:
+  port: 8080
+
+spring:
+  # 导入本地私密配置（含 API Key），该文件已被 .gitignore 忽略，不会上传
+  # 若文件不存在则自动跳过，不影响启动
+  config:
+    import: optional:classpath:application-secret.yml
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/fitness_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+# ============================================================
+# AI 对话配置（智谱 GLM-4-Flash，完全免费）
+# ------------------------------------------------------------
+# 申请免费 API Key：https://open.bigmodel.cn
+# 注册后在「API Keys」页面创建。
+#
+# 配置方式（任选其一）：
+#   1. 在 application-secret.yml 中填写（推荐，该文件不会上传）
+#   2. 设置环境变量 AI_GLM_API_KEY
+# ============================================================
+ai:
+  glm:
+    api-key: ${AI_GLM_API_KEY:}
+    url: https://open.bigmodel.cn/api/paas/v4/chat/completions
+    model: glm-4-flash
+
+# ============================================================
+# 百度 OCR（饮食记录的拍照识别功能）
+# ------------------------------------------------------------
+# 申请地址：https://console.bce.baidu.com/ai/
+# 配置方式同上：application-secret.yml 或环境变量
+# ============================================================
+baidu:
+  ocr:
+    access-key: ${BAIDU_OCR_ACCESS_KEY:}
+    secret-key: ${BAIDU_OCR_SECRET_KEY:}
+
+# JWT
+jwt:
+  secret: ${JWT_SECRET:fitness-secret-key-for-jwt-token-generation-2024}
+  expiration: 86400000  # 24小时，单位毫秒
