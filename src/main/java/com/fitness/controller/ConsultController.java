@@ -1,6 +1,7 @@
 package com.fitness.controller;
 
 import com.fitness.common.Result;
+import com.fitness.common.annotation.RateLimit;
 import com.fitness.dto.ConsultChatRequest;
 import com.fitness.entity.User;
 import com.fitness.service.ExerciseRecordService;
@@ -41,7 +42,10 @@ public class ConsultController {
      * POST /consult/chat
      * <p>
      * 入参：{ "message": "...", "history": [{role, content}] }
+     * <p>
+     * 限流：AI 调用成本高，按用户限制 5 次/秒，防止刷接口
      */
+    @RateLimit(qps = 5, perUser = true, message = "AI 对话过于频繁，请稍后再试")
     @PostMapping("/chat")
     public Result<Map<String, Object>> chat(HttpServletRequest request,
                                             @RequestBody ConsultChatRequest body) {

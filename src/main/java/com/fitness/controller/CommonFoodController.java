@@ -1,6 +1,7 @@
 package com.fitness.controller;
 
 import com.fitness.common.Result;
+import com.fitness.common.cache.LocalCache;
 import com.fitness.entity.CommonFood;
 import com.fitness.mapper.CommonFoodMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +15,25 @@ import java.util.Map;
  * 常见食物库 Controller
  * <p>
  * 供「手动添加饮食记录」的下拉框使用，支持按分类筛选与关键词搜索。
+ * <p>
+ * 性能优化：食物库属于「读多写少、总量小（151 条）、允许短暂不一致」的数据，
+ * 使用本地 LRU 缓存（TTL 10 分钟）避免每次请求都查库。
  */
 @RestController
 @RequestMapping("/common-food")
 public class CommonFoodController {
 
+    /** 缓存 key 前缀，便于按前缀批量失效 */
+    private static final String CACHE_PREFIX = "food:";
+
+    /** 缓存有效期：10 分钟 */
+    private static final long CACHE_TTL = 10 * 60 * 1000L;
+
     @Autowired
     private CommonFoodMapper commonFoodMapper;
+
+    @Autowired
+    private LocalCache localCache;
 
     /**
      * 获取食物列表
@@ -31,12 +44,22 @@ public class CommonFoodController {
                                          @RequestParam(required = false) String keyword) {
         // 有关键词优先按关键词搜
         if (keyword != null && !keyword.trim().isEmpty()) {
-            return Result.success(commonFoodMapper.search(keyword.trim(), 200));
+            String kw = keyword.trim();
+            String cacheKey = CACHE_PREFIX + "search:" + kw;
+            List<CommonFood> list = localCache.getOrLoad(cacheKey, CACHE_TTL,
+                    () -> commonFoodMapper.search(kw, 200));
+            return Result.success(list);
         }
         if (category != null && !category.trim().isEmpty()) {
-            return Result.success(commonFoodMapper.findByCategory(category.trim()));
+            String cat = category.trim();
+            String cacheKey = CACHE_PREFIX + "category:" + cat;
+            List<CommonFood> list = localCache.getOrLoad(cacheKey, CACHE_TTL,
+                    () -> commonFoodMapper.findByCategory(cat));
+            return Result.success(list);
         }
-        return Result.success(commonFoodMapper.selectList(null));
+        List<CommonFood> list = localCache.getOrLoad(CACHE_PREFIX + "all", CACHE_TTL,
+                () -> commonFoodMapper.selectList(null));
+        return Result.success(list);
     }
 
     /**

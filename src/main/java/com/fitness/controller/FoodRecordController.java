@@ -1,6 +1,7 @@
 package com.fitness.controller;
 
 import com.fitness.common.Result;
+import com.fitness.common.annotation.Idempotent;
 import com.fitness.entity.FoodRecord;
 import com.fitness.entity.User;
 import com.fitness.entity.export.FoodRecordExport;
@@ -72,7 +73,10 @@ public class FoodRecordController {
     /**
      * 添加饮食记录
      * POST /foodRecord/add
+     * <p>
+     * 幂等：3 秒内同一用户提交相同内容只成功一次，防止连点产生重复记录
      */
+    @Idempotent(seconds = 3, message = "请勿重复提交，3 秒后再试")
     @PostMapping("/add")
     public Result<FoodRecord> add(HttpServletRequest request, @RequestBody FoodRecord foodRecord) {
         Long userId = (Long) request.getAttribute("userId");
