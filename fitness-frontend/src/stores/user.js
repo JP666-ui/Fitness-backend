@@ -24,6 +24,9 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = computed(() => !!token.value)
   const username = computed(() => userInfo.value?.username || '')
   const nickname = computed(() => userInfo.value?.nickname || '')
+  /** 角色：0-普通用户 1-管理员 */
+  const role = computed(() => userInfo.value?.role ?? 0)
+  const isAdmin = computed(() => role.value === 1)
 
   // Actions
   const setUserInfo = (info) => {
@@ -87,6 +90,8 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn,
     username,
     nickname,
+    role,
+    isAdmin,
     setUserInfo,
     loginAction,
     getUserInfoAction,

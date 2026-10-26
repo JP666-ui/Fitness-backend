@@ -52,11 +52,14 @@ public class UserController {
             User user = userService.register(username, password, nickname);
             
             // 生成 token
-            String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+            String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
             
             Map<String, Object> result = new HashMap<>();
             result.put("token", token);
+            user.setPassword(null);
             result.put("user", user);
+            result.put("role", user.getRole() == null ? 0 : user.getRole());
+            result.put("isAdmin", user.getRole() != null && user.getRole() == 1);
             
             return Result.success(result);
         } catch (Exception e) {
@@ -80,12 +83,16 @@ public class UserController {
             
             User user = userService.login(username, password);
             
-            // 生成 token
-            String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+            // 生成 token（携带角色，供 /admin/** 鉴权使用）
+            String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
             
             Map<String, Object> result = new HashMap<>();
             result.put("token", token);
+            // 清除密码哈希后再返回
+            user.setPassword(null);
             result.put("user", user);
+            result.put("role", user.getRole() == null ? 0 : user.getRole());
+            result.put("isAdmin", user.getRole() != null && user.getRole() == 1);
             
             return Result.success(result);
         } catch (Exception e) {

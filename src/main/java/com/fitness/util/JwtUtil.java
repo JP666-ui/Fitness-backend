@@ -31,12 +31,22 @@ public class JwtUtil {
      * 生成 JWT Token
      */
     public String generateToken(Long userId, String username) {
+        return generateToken(userId, username, 0);
+    }
+    
+    /**
+     * 生成 JWT Token（携带角色）
+     *
+     * @param role 0-普通用户 1-管理员
+     */
+    public String generateToken(Long userId, String username, Integer role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
         
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("username", username)
+                .claim("role", role == null ? 0 : role)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -57,6 +67,15 @@ public class JwtUtil {
     public String getUsernameFromToken(String token) {
         Claims claims = parseToken(token);
         return claims.get("username", String.class);
+    }
+    
+    /**
+     * 从 Token 中获取角色（旧 token 无该字段时返回 0，即普通用户）
+     */
+    public Integer getRoleFromToken(String token) {
+        Claims claims = parseToken(token);
+        Number role = claims.get("role", Number.class);
+        return role == null ? 0 : role.intValue();
     }
     
     /**

@@ -95,7 +95,8 @@ const handleLogin = async () => {
           ElMessage.success('登录成功，正在跳转...')
           // 延迟跳转，确保 cookie 已设置
           setTimeout(() => {
-            window.location.href = '/simple'
+            // 管理员进入管理后台，普通用户进入首页
+            window.location.href = userStore.isAdmin ? '/admin' : '/simple'
           }, 500)
         } else {
           ElMessage.error('登录失败')

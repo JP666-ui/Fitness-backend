@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getToken } from '@/utils/auth'
+import { useUserStore } from '@/stores/user'
 
 const routes = [
   {
@@ -65,6 +66,17 @@ const routes = [
     component: () => import('@/views/Weight.vue'),
   },
   {
+    path: '/messages',
+    name: 'Messages',
+    component: () => import('@/views/Messages.vue'),
+  },
+  {
+    path: '/admin',
+    name: 'AdminCenter',
+    component: () => import('@/views/AdminCenter.vue'),
+    meta: { requiresAdmin: true },
+  },
+  {
     path: '/',
     redirect: '/simple',
   },
@@ -94,6 +106,16 @@ router.beforeEach((to, from, next) => {
   if (!token) {
     next('/login')
     return
+  }
+  
+  // 需要管理员权限的页面
+  if (to.meta.requiresAdmin) {
+    const userStore = useUserStore()
+    // 缓存缺失时先放行，由页面自身兜底；正常流程登录后 userInfo 已在缓存
+    if (userStore.userInfo && userStore.role !== 1) {
+      next('/simple')
+      return
+    }
   }
   
   next()

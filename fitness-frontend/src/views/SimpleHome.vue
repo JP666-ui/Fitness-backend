@@ -2,7 +2,12 @@
   <div class="simple-home">
     <div class="header-section">
       <h1>🏋️ 个人健身管理系统</h1>
-      <p class="welcome">欢迎，{{ userStore.nickname || userStore.username || '访客' }}</p>
+      <p class="welcome">
+        欢迎，{{ userStore.nickname || userStore.username || '访客' }}
+        <el-tag v-if="userStore.isAdmin" size="small" type="danger" effect="dark" style="margin-left: 8px">
+          管理员
+        </el-tag>
+      </p>
     </div>
     
     <div class="feature-grid">
@@ -27,7 +32,7 @@
       <div class="feature-card" @click="goTo('/ai')">
         <div class="icon">🤖</div>
         <h3>AI 营养咨询</h3>
-        <p>DeepSeek 智能营养分析</p>
+        <p>智谱 GLM 智能营养分析</p>
       </div>
       
       <div class="feature-card" @click="goTo('/plan')">
@@ -47,6 +52,21 @@
         <h3>个人中心</h3>
         <p>管理个人信息和设置</p>
       </div>
+
+      <div class="feature-card" @click="goTo('/messages')">
+        <div class="icon" style="position: relative; display: inline-block">
+          📬
+          <span v-if="unread > 0" class="badge">{{ unread > 99 ? '99+' : unread }}</span>
+        </div>
+        <h3>消息通知</h3>
+        <p>查看管理员发来的提醒</p>
+      </div>
+
+      <div class="feature-card admin-entry" v-if="userStore.isAdmin" @click="goTo('/admin')">
+        <div class="icon">🛠️</div>
+        <h3>管理后台</h3>
+        <p>任务监控 · 消息提醒 · 用户管理</p>
+      </div>
     </div>
     
     <div class="action-bar">
@@ -59,10 +79,23 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { getUnreadCount } from '@/api/notice'
 import { SwitchButton } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
+const unread = ref(0)
+let timer = null
+
+const loadUnread = async () => {
+  try {
+    const res = await getUnreadCount()
+    if (res.code === 200) unread.value = res.data.unread || 0
+  } catch {
+    // 未登录或网络异常时静默
+  }
+}
 
 const goTo = (path) => {
   window.location.href = path
@@ -72,6 +105,16 @@ const logout = () => {
   userStore.logout()
   window.location.href = '/login'
 }
+
+onMounted(() => {
+  loadUnread()
+  // 60 秒轮询一次未读数
+  timer = setInterval(loadUnread, 60000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <style scoped>
@@ -149,5 +192,25 @@ h1 {
 
 .action-bar {
   margin-top: 40px;
+}
+
+/* 未读消息角标 */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -14px;
+  background: #f56c6c;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 7px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* 管理后台入口突出显示 */
+.admin-entry {
+  border: 2px dashed #764ba2;
 }
 </style>
