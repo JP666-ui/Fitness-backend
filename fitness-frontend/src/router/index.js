@@ -66,6 +66,11 @@ const routes = [
     component: () => import('@/views/Weight.vue'),
   },
   {
+    path: '/health',
+    name: 'HealthAssess',
+    component: () => import('@/views/HealthAssess.vue'),
+  },
+  {
     path: '/messages',
     name: 'Messages',
     component: () => import('@/views/Messages.vue'),

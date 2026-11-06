@@ -1,9 +1,9 @@
 -- ============================================================
--- 个人健身管理系统 数据库初始化脚本
+-- 智能运动营养与健康评测系统 数据库初始化脚本
 -- 生成方式：mysqldump（与线上库结构一致）
 -- 包含表：user / food_record / exercise_record / weight_record /
 --         fitness_plan / common_food / user_ai_config /
---         nutrition_consult / notice_message
+--         nutrition_consult / notice_message / health_assessment
 -- 默认账号：admin/123456（管理员）  test/123456  jp666/123456（普通用户）
 -- ============================================================
 
@@ -156,6 +156,46 @@ LOCK TABLES `food_record` WRITE;
 /*!40000 ALTER TABLE `food_record` DISABLE KEYS */;
 INSERT INTO `food_record` VALUES (1,3,'馒头',100,223,'2026-10-14','2026-10-14 15:02:45',NULL,NULL,'2026-10-14 15:02:45'),(2,3,'猪肉',150,395,'2026-10-14','2026-10-14 15:03:09',NULL,NULL,'2026-10-14 15:03:09');
 /*!40000 ALTER TABLE `food_record` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `health_assessment`
+--
+
+DROP TABLE IF EXISTS `health_assessment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `health_assessment` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `assess_date` date NOT NULL COMMENT '评测日期',
+  `bmi` decimal(4,1) DEFAULT NULL COMMENT 'BMI',
+  `body_fat_rate` decimal(4,1) DEFAULT NULL COMMENT '体脂率(%)',
+  `muscle_mass` decimal(5,1) DEFAULT NULL COMMENT '肌肉量(kg)',
+  `water_rate` decimal(4,1) DEFAULT NULL COMMENT '体水分率(%)',
+  `fat_mass` decimal(5,1) DEFAULT NULL COMMENT '脂肪量(kg)',
+  `lean_mass` decimal(5,1) DEFAULT NULL COMMENT '去脂体重(kg)',
+  `bmr` int(11) DEFAULT NULL COMMENT '基础代谢(kcal)',
+  `metabolic_age` int(11) DEFAULT NULL COMMENT '代谢年龄(岁)',
+  `visceral_fat` int(11) DEFAULT NULL COMMENT '内脏脂肪等级',
+  `health_score` int(11) DEFAULT NULL COMMENT '综合健康评分(0-100)',
+  `health_level` varchar(20) DEFAULT NULL COMMENT '健康等级',
+  `nutrition_score` int(11) DEFAULT NULL COMMENT '营养均衡评分(0-100)',
+  `advice` text COMMENT '建议(JSON数组)',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_date` (`user_id`,`assess_date`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='健康评测记录表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `health_assessment`
+--
+
+LOCK TABLES `health_assessment` WRITE;
+/*!40000 ALTER TABLE `health_assessment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `health_assessment` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -334,4 +374,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-26 22:45:11
+-- Dump completed on 2026-11-06 14:31:49

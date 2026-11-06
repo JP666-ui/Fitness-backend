@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <h2>🏋️ 个人健身管理系统</h2>
+        <h2>🏋️ 智能运动营养与健康评测系统</h2>
         <p>健康生活，从今天开始</p>
       </div>
       

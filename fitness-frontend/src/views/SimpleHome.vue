@@ -1,7 +1,7 @@
 <template>
   <div class="simple-home">
     <div class="header-section">
-      <h1>🏋️ 个人健身管理系统</h1>
+      <h1>🏥 智能运动营养与健康评测系统</h1>
       <p class="welcome">
         欢迎，{{ userStore.nickname || userStore.username || '访客' }}
         <el-tag v-if="userStore.isAdmin" size="small" type="danger" effect="dark" style="margin-left: 8px">
@@ -11,6 +11,12 @@
     </div>
     
     <div class="feature-grid">
+      <div class="feature-card highlight" @click="goTo('/health')">
+        <div class="icon">🏥</div>
+        <h3>健康评测</h3>
+        <p>体成分分析 · 代谢年龄 · 综合评分</p>
+      </div>
+
       <div class="feature-card" @click="goTo('/food')">
         <div class="icon">🍎</div>
         <h3>饮食记录</h3>
@@ -212,5 +218,14 @@ h1 {
 /* 管理后台入口突出显示 */
 .admin-entry {
   border: 2px dashed #764ba2;
+}
+
+/* 健康评测入口（核心功能）突出显示 */
+.feature-card.highlight {
+  border: 2px solid #1f6fc0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,247,255,0.98) 100%);
+}
+.feature-card.highlight h3 {
+  color: #1f6fc0;
 }
 </style>

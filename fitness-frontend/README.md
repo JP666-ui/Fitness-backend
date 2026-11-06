@@ -1,4 +1,4 @@
-# 🎨 个人健身管理系统 - Vue3 前端
+# 🎨 智能运动营养与健康评测系统 - Vue3 前端
 
 基于 Vue3 + Vite + Element Plus + Pinia 的健身管理前端项目
 
