@@ -7,13 +7,11 @@ import com.fitness.entity.User;
 import com.fitness.entity.export.FoodRecordExport;
 import com.fitness.service.FoodRecordService;
 import com.fitness.service.UserService;
-import com.fitness.util.BaiduDishUtil;
 import com.fitness.util.ExportUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +24,6 @@ import java.util.Map;
 public class FoodRecordController {
 
     private final FoodRecordService foodRecordService;
-    private final BaiduDishUtil baiduDishUtil;
 
     @Autowired
     private UserService userService;
@@ -34,9 +31,8 @@ public class FoodRecordController {
     @Autowired
     private ExportUtil exportUtil;
 
-    public FoodRecordController(FoodRecordService foodRecordService, BaiduDishUtil baiduDishUtil) {
+    public FoodRecordController(FoodRecordService foodRecordService) {
         this.foodRecordService = foodRecordService;
-        this.baiduDishUtil = baiduDishUtil;
     }
 
     /**
@@ -162,43 +158,6 @@ public class FoodRecordController {
         }
 
         exportUtil.export(response, "饮食记录", "记录", exportData, FoodRecordExport.class);
-    }
-
-    /**
-     * 上传图片识别菜品（不保存记录，由前端确认后再调用 add）
-     * POST /foodRecord/recognize
-     */
-    @PostMapping("/recognize")
-    public Result<Map<String, Object>> recognizeDish(HttpServletRequest request,
-                                                     @RequestParam("file") MultipartFile file,
-                                                     @RequestParam(value = "userId", required = false) Long userId) {
-        Long currentUserId = (Long) request.getAttribute("userId");
-        if (currentUserId != null) {
-            userId = currentUserId;
-        }
-
-        try {
-            String imgBase64 = "data:image/jpeg;base64,"
-                    + java.util.Base64.getEncoder().encodeToString(file.getBytes());
-
-            Map<String, Object> result = baiduDishUtil.recognizeDish(imgBase64);
-            result.put("imageUrl", imgBase64);
-
-            // 识别失败时给一个可用兜底，避免前端拿到空结果
-            if (result.get("foodName") == null || String.valueOf(result.get("foodName")).isEmpty()) {
-                Map<String, Object> fallback = new HashMap<>();
-                fallback.put("foodName", "未识别食物");
-                fallback.put("calorie", 0);
-                fallback.put("probability", 0);
-                fallback.put("imageUrl", imgBase64);
-                fallback.put("message", "识别服务未返回结果，请手动填写食物名称与重量");
-                return Result.success(fallback);
-            }
-
-            return Result.success(result);
-        } catch (Exception e) {
-            return Result.fail(500, "识别失败: " + e.getMessage());
-        }
     }
 
     /**

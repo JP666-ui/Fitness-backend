@@ -25,10 +25,6 @@
               <el-icon><Download /></el-icon>
               导出记录
             </el-button>
-            <el-button type="primary" @click="showCameraDialog">
-              <el-icon><Camera /></el-icon>
-              拍照识别
-            </el-button>
             <el-button type="success" @click="showAddDialog">
               <el-icon><Plus /></el-icon>
               手动添加
@@ -132,50 +128,14 @@
     </el-dialog>
     
     <!-- 拍照识别对话框 -->
-    <el-dialog v-model="cameraDialogVisible" title="📷 拍照识别食物热量" width="500px">
-      <div class="camera-container">
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          style="display: none"
-          @change="handleFileChange"
-        />
-        <div class="upload-area" @click="triggerFileInput">
-          <el-icon v-if="!previewImage" class="upload-icon"><Plus /></el-icon>
-          <img v-else :src="previewImage" class="preview-image" />
-          <p v-if="!previewImage">点击拍照或选择图片</p>
-        </div>
-        <div v-if="recognizeResult" class="recognize-result">
-          <p><strong>识别结果：</strong>{{ recognizeResult.foodName }}</p>
-          <p><strong>预估热量：</strong>{{ recognizeResult.calorie }} kcal/100g</p>
-          <p><strong>置信度：</strong>{{ (recognizeResult.confidence * 100).toFixed(2) }}%</p>
-          <el-form-item label="食物重量 (g)" style="margin-top: 15px;">
-            <el-input-number v-model="recognizeWeight" :min="1" :max="5000" />
-          </el-form-item>
-          <p><strong>总热量：</strong>{{ Math.round(recognizeResult.calorie * recognizeWeight / 100) }} kcal</p>
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="cameraDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="recognizing" @click="handleRecognize">
-          识别
-        </el-button>
-        <el-button v-if="recognizeResult" type="success" @click="saveRecognizedFood">
-          保存记录
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Camera, Download } from '@element-plus/icons-vue'
+import { Plus, Download } from '@element-plus/icons-vue'
 import { getFoodList, addFood, deleteFood } from '@/api/food'
-import { recognizeFood } from '@/api/recognition'
 import { getCommonFoods, getFoodCategories } from '@/api/commonFood'
 import { useUserStore } from '@/stores/user'
 
@@ -183,13 +143,6 @@ const userStore = useUserStore()
 const loading = ref(false)
 const foodList = ref([])
 const addDialogVisible = ref(false)
-const cameraDialogVisible = ref(false)
-const previewImage = ref('')
-const recognizing = ref(false)
-const recognizeResult = ref(null)
-const recognizeWeight = ref(100)
-const fileInput = ref(null)
-
 // 常见食物（从后端加载，按分类展示）
 const commonFoods = ref([])
 const foodCategories = ref([])
@@ -383,69 +336,6 @@ const handleDelete = async (row) => {
     }
   }
 }
-
-const showCameraDialog = () => {
-  cameraDialogVisible.value = true
-  previewImage.value = ''
-  recognizeResult.value = null
-  recognizeWeight.value = 100
-}
-
-const triggerFileInput = () => {
-  fileInput.value?.click()
-}
-
-const handleFileChange = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      previewImage.value = e.target.result
-    }
-    reader.readAsDataURL(file)
-  }
-}
-
-const handleRecognize = async () => {
-  if (!previewImage.value) {
-    ElMessage.warning('请先选择图片')
-    return
-  }
-  
-  recognizing.value = true
-  try {
-    const res = await recognizeFood(previewImage.value)
-    if (res.code === 200) {
-      recognizeResult.value = res.data
-      ElMessage.success('识别成功')
-    }
-  } catch (error) {
-    ElMessage.error('识别失败')
-  } finally {
-    recognizing.value = false
-  }
-}
-
-const saveRecognizedFood = async () => {
-  if (!recognizeResult.value) return
-  
-  try {
-    const totalCalorie = Math.round(recognizeResult.value.calorie * recognizeWeight.value / 100)
-    const res = await addFood({
-      foodName: recognizeResult.value.foodName,
-      weight: recognizeWeight.value,
-      calorie: totalCalorie,
-    })
-    if (res.code === 200) {
-      ElMessage.success('保存成功')
-      cameraDialogVisible.value = false
-      fetchFoodList()
-    }
-  } catch (error) {
-    ElMessage.error('保存失败')
-  }
-}
-
 const formatDate = (date) => {
   if (!date) return ''
   return new Date(date).toLocaleString('zh-CN')
@@ -510,47 +400,7 @@ onMounted(() => {
   line-height: 1.6;
   margin-top: 4px;
 }
-
-.camera-container {
-  text-align: center;
-}
-
-.upload-area {
-  width: 100%;
-  height: 300px;
-  border: 2px dashed #dcdfe6;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: border-color 0.3s;
-}
-
 .upload-area:hover {
   border-color: #409eff;
-}
-
-.upload-icon {
-  font-size: 48px;
-  color: #909399;
-}
-
-.preview-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.recognize-result {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
-}
-
-.recognize-result p {
-  margin-bottom: 10px;
 }
 </style>

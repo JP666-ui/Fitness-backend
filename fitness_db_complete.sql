@@ -1,10 +1,11 @@
 -- ============================================================
 -- 智能运动营养与健康评测系统 数据库初始化脚本
 -- 生成方式：mysqldump（与线上库结构一致）
+-- 定位：纯个人健康管理系统，无管理员/消息模块
 -- 包含表：user / food_record / exercise_record / weight_record /
 --         fitness_plan / common_food / user_ai_config /
---         nutrition_consult / notice_message / health_assessment
--- 默认账号：admin/123456（管理员）  test/123456  jp666/123456（普通用户）
+--         nutrition_consult / health_assessment
+-- 默认账号：test/123456  jp666/123456
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS `fitness_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -145,7 +146,7 @@ CREATE TABLE `food_record` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_record_date` (`record_date`),
   KEY `idx_user_date` (`user_id`,`record_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COMMENT='食物记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COMMENT='食物记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -186,7 +187,7 @@ CREATE TABLE `health_assessment` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_date` (`user_id`,`assess_date`),
   KEY `idx_user` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='健康评测记录表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='健康评测记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -196,38 +197,6 @@ CREATE TABLE `health_assessment` (
 LOCK TABLES `health_assessment` WRITE;
 /*!40000 ALTER TABLE `health_assessment` DISABLE KEYS */;
 /*!40000 ALTER TABLE `health_assessment` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `notice_message`
---
-
-DROP TABLE IF EXISTS `notice_message`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `notice_message` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `sender_id` bigint(20) NOT NULL COMMENT '发送人（管理员）ID',
-  `sender_name` varchar(50) DEFAULT NULL COMMENT '发送人昵称',
-  `receiver_id` bigint(20) DEFAULT NULL COMMENT '接收人ID，NULL 表示全体广播',
-  `title` varchar(100) NOT NULL COMMENT '标题',
-  `content` varchar(500) NOT NULL COMMENT '内容',
-  `type` int(11) NOT NULL DEFAULT '1' COMMENT '类型：1-通知 2-提醒 3-警告',
-  `is_read` int(11) NOT NULL DEFAULT '0' COMMENT '0-未读 1-已读',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_receiver` (`receiver_id`,`is_read`),
-  KEY `idx_create_time` (`create_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COMMENT='管理员消息提醒';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `notice_message`
---
-
-LOCK TABLES `notice_message` WRITE;
-/*!40000 ALTER TABLE `notice_message` DISABLE KEYS */;
-/*!40000 ALTER TABLE `notice_message` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -271,8 +240,6 @@ CREATE TABLE `user` (
   `username` varchar(50) NOT NULL COMMENT '用户名',
   `password` varchar(100) NOT NULL COMMENT '密码（MD5加密）',
   `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
-  `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
-  `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `avatar` varchar(500) DEFAULT NULL COMMENT '头像URL',
   `gender` int(11) DEFAULT '0' COMMENT '性别：0-保密 1-男 2-女',
   `age` int(11) DEFAULT NULL COMMENT '年龄',
@@ -282,7 +249,6 @@ CREATE TABLE `user` (
   `bmi` decimal(4,2) DEFAULT NULL COMMENT 'BMI指数',
   `daily_calorie_goal` int(11) DEFAULT '2000' COMMENT '每日热量目标(kcal)',
   `status` int(11) DEFAULT '1' COMMENT '状态：0-禁用 1-启用',
-  `role` int(11) NOT NULL DEFAULT '0' COMMENT '角色：0-普通用户 1-管理员',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -298,7 +264,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'admin','e10adc3949ba59abbe56e057f20f883e','管理员','admin@fitness.com',NULL,NULL,1,30,175.00,70.00,NULL,NULL,2500,1,1,'2026-10-13 15:46:45','2026-10-26 22:26:34'),(2,'test','e10adc3949ba59abbe56e057f20f883e','jp','','',NULL,1,22,183.00,85.00,NULL,NULL,1800,1,0,'2026-10-13 15:46:45','2026-10-14 19:30:41'),(3,'jp666','e10adc3949ba59abbe56e057f20f883e','jp','','',NULL,1,22,183.00,74.90,NULL,NULL,2000,1,0,'2026-10-13 15:48:04','2026-10-26 22:41:45');
+INSERT INTO `user` VALUES (1,'admin','e10adc3949ba59abbe56e057f20f883e','管理员',NULL,1,30,175.00,70.00,NULL,NULL,2500,1,'2026-10-13 15:46:45','2026-10-26 22:26:34'),(2,'test','e10adc3949ba59abbe56e057f20f883e','jp',NULL,1,22,183.00,85.00,NULL,NULL,1800,1,'2026-10-13 15:46:45','2026-10-14 19:30:41'),(3,'jp666','e10adc3949ba59abbe56e057f20f883e','jp',NULL,1,22,183.00,74.90,NULL,NULL,2000,1,'2026-10-13 15:48:04','2026-10-26 22:41:45');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -374,4 +340,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-06 14:31:49
+-- Dump completed on 2026-11-20 22:42:27

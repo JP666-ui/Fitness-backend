@@ -41,16 +41,6 @@ ai:
     url: https://open.bigmodel.cn/api/paas/v4/chat/completions
     model: glm-4-flash
 
-# ============================================================
-# 百度 OCR（饮食记录的拍照识别功能）
-# ------------------------------------------------------------
-# 申请地址：https://console.bce.baidu.com/ai/
-# 配置方式同上：application-secret.yml 或环境变量
-# ============================================================
-baidu:
-  ocr:
-    access-key: ${BAIDU_OCR_ACCESS_KEY:}
-    secret-key: ${BAIDU_OCR_SECRET_KEY:}
 
 # JWT
 jwt:

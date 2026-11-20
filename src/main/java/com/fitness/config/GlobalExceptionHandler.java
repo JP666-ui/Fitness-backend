@@ -5,10 +5,12 @@ import com.fitness.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 全局异常处理
@@ -60,6 +62,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public Result<String> handleMissingParam(MissingServletRequestParameterException e) {
         return Result.fail(400, "缺少必填参数：" + e.getParameterName());
+    }
+
+    /**
+     * 不存在的接口 → 404
+     * <p>
+     * Spring 6 对「没有匹配的 @RequestMapping」抛 NoResourceFoundException，
+     * 若不单独处理会被兜底改成 500，语义不准确。
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Result<String> handleNotFound(NoResourceFoundException e) {
+        return Result.fail(404, "接口不存在：" + e.getResourcePath());
+    }
+
+    /**
+     * 请求方法不支持（如用 GET 调 POST 接口）→ 405
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public Result<String> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
+        return Result.fail(405, "请求方法不支持：" + e.getMethod());
     }
 
     /**

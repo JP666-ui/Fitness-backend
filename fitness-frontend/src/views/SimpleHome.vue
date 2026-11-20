@@ -1,231 +1,432 @@
 <template>
-  <div class="simple-home">
-    <div class="header-section">
-      <h1>🏥 智能运动营养与健康评测系统</h1>
-      <p class="welcome">
-        欢迎，{{ userStore.nickname || userStore.username || '访客' }}
-        <el-tag v-if="userStore.isAdmin" size="small" type="danger" effect="dark" style="margin-left: 8px">
-          管理员
-        </el-tag>
-      </p>
-    </div>
-    
-    <div class="feature-grid">
-      <div class="feature-card highlight" @click="goTo('/health')">
-        <div class="icon">🏥</div>
-        <h3>健康评测</h3>
-        <p>体成分分析 · 代谢年龄 · 综合评分</p>
+  <div class="home">
+    <!-- ============ 顶部：个人信息 ============ -->
+    <div class="hero">
+      <div class="hero-left">
+        <h1>智能运动营养与健康评测系统</h1>
+        <p class="greet">
+          {{ greeting }}，{{ userStore.nickname || userStore.username || '访客' }}
+        </p>
       </div>
-
-      <div class="feature-card" @click="goTo('/food')">
-        <div class="icon">🍎</div>
-        <h3>饮食记录</h3>
-        <p>记录每日饮食，计算热量摄入</p>
-      </div>
-      
-      <div class="feature-card" @click="goTo('/exercise')">
-        <div class="icon">🏃</div>
-        <h3>运动记录</h3>
-        <p>记录运动消耗，追踪健身进度</p>
-      </div>
-      
-      <div class="feature-card" @click="goTo('/weight')">
-        <div class="icon">⚖️</div>
-        <h3>体重记录</h3>
-        <p>每日记录体重，追踪变化趋势</p>
-      </div>
-      
-      <div class="feature-card" @click="goTo('/ai')">
-        <div class="icon">🤖</div>
-        <h3>AI 营养咨询</h3>
-        <p>智谱 GLM 智能营养分析</p>
-      </div>
-      
-      <div class="feature-card" @click="goTo('/plan')">
-        <div class="icon">📋</div>
-        <h3>健身计划</h3>
-        <p>制定个性化健身目标</p>
-      </div>
-      
-      <div class="feature-card" @click="goTo('/statistics')">
-        <div class="icon">📊</div>
-        <h3>数据统计</h3>
-        <p>查看健身数据分析</p>
-      </div>
-      
-      <div class="feature-card" @click="goTo('/profile')">
-        <div class="icon">👤</div>
-        <h3>个人中心</h3>
-        <p>管理个人信息和设置</p>
-      </div>
-
-      <div class="feature-card" @click="goTo('/messages')">
-        <div class="icon" style="position: relative; display: inline-block">
-          📬
-          <span v-if="unread > 0" class="badge">{{ unread > 99 ? '99+' : unread }}</span>
+      <div class="hero-right">
+        <div class="stat-chip" v-if="profile.bmi">
+          <span class="chip-label">BMI</span>
+          <span class="chip-val">{{ profile.bmi }}</span>
+          <span class="chip-sub">{{ profile.bmiLevel }}</span>
         </div>
-        <h3>消息通知</h3>
-        <p>查看管理员发来的提醒</p>
-      </div>
-
-      <div class="feature-card admin-entry" v-if="userStore.isAdmin" @click="goTo('/admin')">
-        <div class="icon">🛠️</div>
-        <h3>管理后台</h3>
-        <p>任务监控 · 消息提醒 · 用户管理</p>
+        <div class="stat-chip" v-if="assess.healthScore != null">
+          <span class="chip-label">健康分</span>
+          <span class="chip-val">{{ assess.healthScore }}</span>
+          <span class="chip-sub">{{ assess.healthLevel }}</span>
+        </div>
+        <el-button class="logout-btn" @click="logout">
+          <el-icon><SwitchButton /></el-icon>
+          退出
+        </el-button>
       </div>
     </div>
-    
-    <div class="action-bar">
-      <el-button type="danger" size="large" @click="logout">
-        <el-icon><SwitchButton /></el-icon>
-        退出登录
-      </el-button>
+
+    <!-- ============ 四大功能块 ============ -->
+    <div class="blocks">
+      <!-- 1. 个人基础信息 -->
+      <div class="block block-info" @click="goTo('/profile')">
+        <div class="block-head">
+          <span class="block-icon">👤</span>
+          <div>
+            <h2>个人基础信息</h2>
+            <p>身体档案与健康评测</p>
+          </div>
+        </div>
+        <div class="block-body">
+          <div class="kv-grid">
+            <div class="kv" v-for="item in infoItems" :key="item.label">
+              <span class="kv-label">{{ item.label }}</span>
+              <span class="kv-val">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="block-foot">
+          <span>完善资料 · 查看健康评测</span>
+          <el-icon><ArrowRight /></el-icon>
+        </div>
+      </div>
+
+      <!-- 2. 健康计划 -->
+      <div class="block block-plan">
+        <div class="block-head">
+          <span class="block-icon">🎯</span>
+          <div>
+            <h2>健康计划</h2>
+            <p>目标设定与每日记录</p>
+          </div>
+        </div>
+        <div class="block-body">
+          <div class="plan-summary" v-if="plan.planName">
+            <div class="plan-name">{{ plan.planName }}</div>
+            <div class="plan-meta">
+              <span v-if="plan.targetCalorie">目标 {{ plan.targetCalorie }} kcal/天</span>
+              <span v-if="plan.dailyDeficit">缺口 {{ plan.dailyDeficit }} kcal</span>
+            </div>
+            <el-progress
+              v-if="plan.timePercent != null"
+              :percentage="plan.timePercent"
+              :stroke-width="6"
+              :show-text="false"
+              style="margin-top: 8px"
+            />
+            <div class="plan-days" v-if="plan.totalDays">
+              已进行 {{ plan.passedDays }} / {{ plan.totalDays }} 天
+            </div>
+          </div>
+          <div class="plan-empty" v-else>还没有进行中的计划</div>
+
+          <div class="sub-entries">
+            <div class="sub-entry" @click.stop="goTo('/food')">
+              <span class="sub-icon">🍎</span>
+              <span class="sub-text">饮食记录</span>
+              <span class="sub-val">{{ today.intake || 0 }} kcal</span>
+            </div>
+            <div class="sub-entry" @click.stop="goTo('/exercise')">
+              <span class="sub-icon">🏃</span>
+              <span class="sub-text">运动记录</span>
+              <span class="sub-val">{{ today.burn || 0 }} kcal</span>
+            </div>
+            <div class="sub-entry" @click.stop="goTo('/weight')">
+              <span class="sub-icon">⚖️</span>
+              <span class="sub-text">体重记录</span>
+              <span class="sub-val">{{ latestWeight ? latestWeight + ' kg' : '--' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="block-foot" @click.stop="goTo('/plan')">
+          <span>查看/创建计划</span>
+          <el-icon><ArrowRight /></el-icon>
+        </div>
+      </div>
+
+      <!-- 3. AI 营养咨询 -->
+      <div class="block block-ai" @click="goTo('/consult')">
+        <div class="block-head">
+          <span class="block-icon">🤖</span>
+          <div>
+            <h2>AI 营养咨询</h2>
+            <p>智谱 GLM 智能问答</p>
+          </div>
+        </div>
+        <div class="block-body">
+          <div class="ai-preview">
+            <div class="ai-bubble">减脂期晚餐吃什么比较好？</div>
+            <div class="ai-bubble ai-reply">结合你的数据建议……</div>
+          </div>
+        </div>
+        <div class="block-foot">
+          <span>开始对话 · 获取个性化建议</span>
+          <el-icon><ArrowRight /></el-icon>
+        </div>
+      </div>
+
+      <!-- 4. 数据统计 -->
+      <div class="block block-stat" @click="goTo('/statistics')">
+        <div class="block-head">
+          <span class="block-icon">📊</span>
+          <div>
+            <h2>数据统计</h2>
+            <p>摄入 / 消耗 / 缺口趋势</p>
+          </div>
+        </div>
+        <div class="block-body">
+          <div class="stat-row">
+            <div class="stat-item">
+              <div class="stat-num">{{ today.intake || 0 }}</div>
+              <div class="stat-label">今日摄入</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num">{{ today.burn || 0 }}</div>
+              <div class="stat-label">今日消耗</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" :class="deficitClass">{{ today.deficit || 0 }}</div>
+              <div class="stat-label">今日缺口</div>
+            </div>
+          </div>
+        </div>
+        <div class="block-foot">
+          <span>查看每日趋势分析</span>
+          <el-icon><ArrowRight /></el-icon>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { SwitchButton, ArrowRight } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { getUnreadCount } from '@/api/notice'
-import { SwitchButton } from '@element-plus/icons-vue'
+import { getTodayStatistics } from '@/api/statistics'
+import { getCurrentPlan } from '@/api/plan'
+import { getWeightStatistics } from '@/api/weight'
+import { getAssess } from '@/api/health'
 
+const router = useRouter()
 const userStore = useUserStore()
-const unread = ref(0)
-let timer = null
 
-const loadUnread = async () => {
-  try {
-    const res = await getUnreadCount()
-    if (res.code === 200) unread.value = res.data.unread || 0
-  } catch {
-    // 未登录或网络异常时静默
-  }
-}
+const today = ref({})
+const plan = ref({})
+const profile = reactive({})
+const assess = reactive({})
+const latestWeight = ref(null)
 
-const goTo = (path) => {
-  window.location.href = path
-}
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 6) return '夜深了'
+  if (h < 12) return '早上好'
+  if (h < 14) return '中午好'
+  if (h < 18) return '下午好'
+  return '晚上好'
+})
+
+const infoItems = computed(() => [
+  { label: '性别', value: profile.gender || '--' },
+  { label: '年龄', value: profile.age ? profile.age + ' 岁' : '--' },
+  { label: '身高', value: profile.height ? profile.height + ' cm' : '--' },
+  { label: '体重', value: profile.weight ? profile.weight + ' kg' : '--' },
+  { label: '目标体重', value: profile.targetWeight ? profile.targetWeight + ' kg' : '--' },
+  { label: '健康评分', value: assess.healthScore != null ? assess.healthScore + ' 分' : '待评测' },
+])
+
+const deficitClass = computed(() => {
+  const d = today.value.deficit
+  if (d == null) return ''
+  return d > 0 ? 'good' : d < 0 ? 'bad' : ''
+})
+
+const goTo = (path) => router.push(path)
 
 const logout = () => {
   userStore.logout()
   window.location.href = '/login'
 }
 
-onMounted(() => {
-  loadUnread()
-  // 60 秒轮询一次未读数
-  timer = setInterval(loadUnread, 60000)
-})
+const bmiLevel = (bmi) => {
+  if (!bmi) return null
+  if (bmi < 18.5) return '偏瘦'
+  if (bmi <= 23.9) return '正常'
+  if (bmi <= 27.9) return '超重'
+  return '肥胖'
+}
 
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
-})
+const loadAll = async () => {
+  const info = await userStore.getUserInfoAction()
+  if (info) {
+    profile.gender = info.gender === 1 ? '男' : info.gender === 2 ? '女' : null
+    profile.age = info.age
+    profile.height = info.height
+    profile.weight = info.weight
+    profile.targetWeight = info.targetWeight
+    profile.bmi = info.bmi
+    profile.bmiLevel = bmiLevel(info.bmi)
+  }
+
+  try {
+    const r = await getTodayStatistics()
+    if (r.code === 200) {
+      today.value = {
+        intake: r.data.todayIntake,
+        burn: r.data.todayBurn,
+        deficit: r.data.todayDeficit,
+      }
+    }
+  } catch { /* 静默 */ }
+
+  try {
+    const r = await getCurrentPlan()
+    if (r.code === 200 && r.data) plan.value = r.data
+  } catch { /* 静默 */ }
+
+  try {
+    const r = await getWeightStatistics(30)
+    if (r.code === 200 && r.data) {
+      latestWeight.value = r.data.currentWeight ?? r.data.latestWeight ?? null
+    }
+  } catch { /* 静默 */ }
+
+  try {
+    const r = await getAssess()
+    if (r.code === 200 && r.data?.evaluation) {
+      assess.healthScore = r.data.evaluation.healthScore
+      assess.healthLevel = r.data.evaluation.healthLevel
+    }
+  } catch { /* 静默 */ }
+}
+
+onMounted(loadAll)
 </script>
 
 <style scoped>
-.simple-home {
+.home {
   min-height: 100vh;
-  padding: 40px 20px;
-  text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-image: 
-    linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%),
-    url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background: #f0f2f5;
+  padding: 24px;
 }
 
-.header-section {
-  margin-bottom: 40px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.95);
+/* ---------- 顶部 ---------- */
+.hero {
+  background: linear-gradient(135deg, #1f6fc0 0%, #2f9de0 100%);
   border-radius: 16px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-h1 {
-  color: #409EFF;
-  margin-bottom: 10px;
-  font-size: 32px;
-}
-
-.welcome {
-  color: #606266;
-  font-size: 18px;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  max-width: 1200px;
-  margin: 0 auto 40px;
-}
-
-.feature-card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 30px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.feature-card .icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-}
-
-.feature-card h3 {
-  color: #303133;
-  margin-bottom: 10px;
-  font-size: 20px;
-}
-
-.feature-card p {
-  color: #909399;
-  font-size: 14px;
-}
-
-.action-bar {
-  margin-top: 40px;
-}
-
-/* 未读消息角标 */
-.badge {
-  position: absolute;
-  top: -6px;
-  right: -14px;
-  background: #f56c6c;
+  padding: 24px 28px;
   color: #fff;
-  font-size: 12px;
-  line-height: 1;
-  padding: 4px 7px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.greet { margin: 0; opacity: 0.9; font-size: 14px; }
+
+.hero-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.stat-chip {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 10px;
-  min-width: 18px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.chip-label { font-size: 12px; opacity: 0.85; }
+.chip-val { font-size: 20px; font-weight: 700; }
+.chip-sub { font-size: 12px; opacity: 0.85; }
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+.logout-btn:hover { background: rgba(255, 255, 255, 0.28); color: #fff; }
+
+/* ---------- 四大块 ---------- */
+.blocks {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+@media (max-width: 900px) { .blocks { grid-template-columns: 1fr; } }
+
+.block {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 22px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid transparent;
+}
+
+.block:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1); }
+
+.block-info { border-top-color: #409eff; }
+.block-plan { border-top-color: #67c23a; }
+.block-ai { border-top-color: #a06cd5; }
+.block-stat { border-top-color: #e6a23c; }
+
+.block-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.block-icon { font-size: 28px; }
+.block-head h2 { margin: 0 0 2px; font-size: 17px; color: #303133; }
+.block-head p { margin: 0; font-size: 12px; color: #909399; }
+
+.block-body { flex: 1; }
+
+.block-foot {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f2f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #909399;
+}
+
+.block:hover .block-foot { color: #409eff; }
+
+/* 信息卡 */
+.kv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+.kv {
+  background: #f8f9fb;
+  border-radius: 8px;
+  padding: 10px;
   text-align: center;
 }
 
-/* 管理后台入口突出显示 */
-.admin-entry {
-  border: 2px dashed #764ba2;
+.kv-label { display: block; font-size: 12px; color: #909399; margin-bottom: 4px; }
+.kv-val { font-size: 15px; font-weight: 600; color: #303133; }
+
+/* 计划卡 */
+.plan-summary { margin-bottom: 12px; }
+.plan-name { font-size: 15px; font-weight: 600; color: #303133; margin-bottom: 4px; }
+.plan-meta { font-size: 12px; color: #909399; display: flex; gap: 14px; }
+.plan-days { font-size: 12px; color: #909399; margin-top: 4px; }
+.plan-empty { color: #c0c4cc; font-size: 13px; padding: 10px 0; }
+
+.sub-entries { display: flex; flex-direction: column; gap: 8px; }
+
+.sub-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #f8f9fb;
+  border-radius: 8px;
+  transition: background 0.2s;
 }
 
-/* 健康评测入口（核心功能）突出显示 */
-.feature-card.highlight {
-  border: 2px solid #1f6fc0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,247,255,0.98) 100%);
+.sub-entry:hover { background: #eef5ff; }
+.sub-icon { font-size: 16px; }
+.sub-text { flex: 1; font-size: 13px; color: #606266; }
+.sub-val { font-size: 13px; font-weight: 600; color: #303133; }
+
+/* AI 卡 */
+.ai-preview { display: flex; flex-direction: column; gap: 8px; }
+
+.ai-bubble {
+  background: #f0f2f5;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #606266;
+  max-width: 88%;
 }
-.feature-card.highlight h3 {
-  color: #1f6fc0;
+
+.ai-reply { background: #f6f0ff; color: #7b5ea7; align-self: flex-end; }
+
+/* 统计卡 */
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat-item { text-align: center; }
+
+.stat-num {
+  font-size: 26px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1.2;
 }
+
+.stat-num.good { color: #67c23a; }
+.stat-num.bad { color: #f56c6c; }
+
+.stat-label { font-size: 12px; color: #909399; margin-top: 4px; }
 </style>

@@ -131,7 +131,6 @@
     </el-card>
     
     <!-- 用户列表（仅管理员可见） -->
-    <UserListPanel v-if="isAdmin" />
   </div>
 </template>
 
@@ -141,14 +140,12 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Food, Odometer, PieChart, Timer, Plus, ChatDotRound } from '@element-plus/icons-vue'
 import { getTodayStatistics } from '@/api/statistics'
-import UserListPanel from '@/components/UserListPanel.vue'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
 
 // 判断是否为管理员
-const isAdmin = computed(() => userStore.username === 'admin')
 const todayStats = ref({})
 
 // BMI 状态计算

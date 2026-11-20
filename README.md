@@ -1,6 +1,8 @@
 # 智能运动营养与健康评测系统
 
-基于 **SpringBoot 3.2 + Vue3 + MySQL + 智谱 GLM** 的前后端分离健身管理系统。
+基于 **SpringBoot 3.2 + Vue3 + MySQL + 智谱 GLM** 的前后端分离个人健康管理系统。
+
+**纯个人使用** —— 无管理员、无社交、无消息推送，只关注「我」的身体数据与健康改进。
 
 围绕「饮食记录 → 运动消耗 → 体重追踪 → 计划规划 → 数据反馈」形成闭环，用医学公式（Mifflin-St Jeor）与代谢当量（MET）给出可解释的热量计算，而不是凭感觉估数。
 
@@ -27,10 +29,10 @@
 
 | 项目 | 说明 |
 |---|---|
-| 形态 | 前后端分离 Web 应用，支持管理员 / 普通用户双角色 |
+| 形态 | 前后端分离 Web 应用（纯个人系统，无角色体系） |
 | 代码规模 | 后端 68 个 Java 文件 / 约 6400 行；前端 32 个文件 / 约 7600 行 |
-| 接口数量 | 77 个 RESTful 接口，14 个 Controller |
-| 数据库 | MySQL 5.7，10 张表，食物库预置 151 条 |
+| 接口数量 | 61 个 RESTful 接口，11 个 Controller |
+| 数据库 | MySQL 5.7，9 张表，食物库预置 151 条 |
 | 前端页面 | 15 个 Vue 页面（含管理后台、消息中心、健康评测） |
 
 ### 解决的问题
@@ -145,13 +147,23 @@ server: {
 
 ## 核心功能
 
+功能按**四大块**组织，首页即入口：
+
+| 功能块 | 包含页面 | 说明 |
+|---|---|---|
+| **1. 个人基础信息** | 个人中心、健康评测 | 身体档案（性别/年龄/身高/体重/目标）+ 体成分评测 |
+| **2. 健康计划** | 健身计划、饮食记录、运动记录、体重记录 | 目标设定、热量缺口计算、每日打卡记录 |
+| **3. AI 营养咨询** | AI 对话 | 智谱 GLM 多轮问答，注入个人数据个性化回答 |
+| **4. 数据统计** | 统计页 | 摄入/消耗/缺口趋势、计划进度、达标率 |
+
+> 设计取舍：**纯个人系统，不含管理员、消息推送、社交功能**。账号只服务一个使用者，因此移除了邮箱、手机号与角色字段，只保留与健康相关的数据。
+
 ### 1. 用户与认证
 
-- 注册：用户名唯一校验、密码 MD5 加密存储，注册默认普通用户角色
-- 登录：校验通过后签发 JWT（24 小时有效），token 内携带角色
-- 鉴权：`JwtInterceptor` 解析 token，将 userId 与 role 注入 request
-- 角色：`role=0` 普通用户 / `role=1` 管理员，登录按角色分流跳转
-- 个人信息：身高、体重、目标体重、年龄、性别、活动系数
+- 注册：用户名唯一校验、密码 MD5 加密存储
+- 登录：校验通过后签发 JWT（24 小时有效）
+- 鉴权：`JwtInterceptor` 解析 token，将 userId 注入 request
+- 个人信息：性别、年龄、身高、体重、目标体重（**不含邮箱/手机号**）
 
 ### 2. 饮食记录
 
@@ -206,26 +218,6 @@ server: {
 - 密钥管理：用户可填自己的 API Key，AES/GCM 加密存储
 - 降级：无密钥或调用失败时使用内置知识库应答
 - 限流：5 QPS / 用户
-
-### 9. 管理员后台
-
-管理员登录后进入 `/admin`，包含三个标签页：
-
-- **任务执行监控**：查看所有普通用户的计划执行情况 —— 今日是否打卡（饮食/运动/体重）、近 N 天打卡天数、综合执行率评分与评价（优秀/良好/一般/懈怠），支持点开查看单人每日明细
-- **消息提醒**：向指定用户或全体发送通知/提醒/警告，查看发送记录；可对懈怠用户一键发送打卡提醒
-- **用户管理**：用户列表（搜索、分页）、启用/禁用、删除
-
-权限控制：`/admin/**` 路径由 `JwtInterceptor` 统一校验角色，普通用户访问返回 403；前端路由守卫二次拦截并隐藏管理入口。
-
-### 10. 消息中心
-
-所有用户在 `/messages` 查看管理员发来的消息：
-
-- 收件箱：定向消息 + 全体广播，未读高亮
-- 未读角标：首页图标实时显示未读数（60 秒轮询）
-- 已读管理：点击单条标记已读，或一键全部已读
-
-> 说明：广播消息的已读状态为全局共享（单表设计），即某用户读完广播后其他用户看到的也是已读。这是个人项目对"广播"场景的简化，定向消息的已读状态是独立的。若需每人独立已读，应拆分为「消息表 + 用户已读关联表」。
 
 ---
 
@@ -552,7 +544,6 @@ if (answer == null || answer.isEmpty()) {
 | `common_food` | 食物热量库 | 名称、每 100g 热量、分类 |
 | `user_ai_config` | 用户 AI 密钥 | 加密后的 Key |
 | `nutrition_consult` | 咨询历史 | 问题、回答 |
-| `notice_message` | 消息提醒 | 发送人、接收人（NULL=广播）、类型、已读状态 |
 | `health_assessment` | 健康评测记录 | 体成分各项、代谢指标、健康分、建议（每人每天一条，唯一索引） |
 
 ### 设计考量
@@ -665,43 +656,6 @@ if (answer == null || answer.isEmpty()) {
 | POST | `/ai-config/test` | 测试连通性 |
 | GET | `/ai-config/status` | 密钥来源状态 |
 
-### 管理 · 用户 `/admin/user`
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/admin/user/list` | 分页列表 |
-| GET | `/admin/user/all` | 全部用户 |
-| GET | `/admin/user/{id}` | 用户详情 |
-| PUT | `/admin/user/{id}/status` | 启用/禁用 |
-| DELETE | `/admin/user/{id}` | 删除用户 |
-| GET | `/admin/user/statistics` | 用户统计 |
-
-### 管理 · 任务监控 `/admin/task`
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/admin/task/overview?days=7` | 所有普通用户任务执行总览 |
-| GET | `/admin/task/detail/{userId}` | 单个用户执行详情（含每日明细） |
-
-### 管理 · 消息发送 `/admin/notice`
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/admin/notice/send` | 发送消息（定向或全体广播） |
-| GET | `/admin/notice/sent` | 我发出的消息记录 |
-| GET | `/admin/notice/user/{userId}` | 查看某用户收到的消息 |
-
-### 消息中心 `/notice`（所有登录用户）
-
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | `/notice/inbox` | 我的收件箱 |
-| GET | `/notice/unread` | 我的未读数 |
-| PUT | `/notice/{id}/read` | 标记单条已读 |
-| PUT | `/notice/read-all` | 全部标记已读 |
-
-> `/admin/**` 路径由 JwtInterceptor 统一校验角色，非管理员访问返回 403。
-
 ### 健康评测 `/health`
 
 | 方法 | 路径 | 说明 |
@@ -790,9 +744,8 @@ npm.cmd run dev
 
 ### 测试账号
 
-| 账号 | 密码 | 角色 | 登录后进入 |
-|---|---|---|---|
-| `admin` | `123456` | 管理员 | `/admin` 管理后台 |
+| 账号 | 密码 | 登录后进入 |
+|---|---|---|
 | `test` | `123456` | 普通用户 | `/simple` 首页 |
 | `jp666` | `123456` | 普通用户 | `/simple` 首页 |
 
@@ -837,10 +790,10 @@ Fitness-backend/
 │   │   ├── limiter/         令牌桶限流器
 │   │   └── Result.java      统一返回体
 │   ├── config/              配置类（CORS、JWT、异常处理、MyBatis）
-│   ├── controller/          14 个 Controller（含 admin 子包：用户/任务/消息）
+│   ├── controller/          11 个 Controller
 │   ├── dto/                 数据传输对象
-│   ├── entity/              实体类（含 NoticeMessage、HealthAssessment）
-│   ├── mapper/              MyBatis-Plus Mapper（9 个）
+│   ├── entity/              实体类（含 HealthAssessment）
+│   ├── mapper/              MyBatis-Plus Mapper（8 个）
 │   ├── service/             业务接口（含 HealthAssessmentService 评测算法）
 │   │   └── impl/            业务实现
 │   └── util/                工具类（JWT、加密、AI 客户端、导出）
@@ -850,9 +803,9 @@ Fitness-backend/
 │   └── application-secret.yml.example   配置模板
 ├── fitness-frontend/
 │   ├── src/
-│   │   ├── api/             12 个接口模块（含 admin、notice、health）
-│   │   ├── views/           15 个页面（含 AdminCenter、Messages、HealthAssess）
-│   │   ├── router/          路由与守卫（含管理员路由保护）
+│   │   ├── api/             9 个接口模块（含 health）
+│   │   ├── views/           13 个页面（含 HealthAssess）
+│   │   ├── router/          路由与登录守卫
 │   │   ├── stores/          Pinia 状态（含角色）
 │   │   ├── utils/           axios 封装、token 管理
 │   │   └── components/      公共组件

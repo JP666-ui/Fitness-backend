@@ -23,14 +23,8 @@
             <el-divider />
             
             <div class="info-list">
-              <div class="info-item">
-                <span class="label">📧 邮箱：</span>
-                <span class="value">{{ userInfo.email || '未设置' }}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">📱 手机：</span>
-                <span class="value">{{ userInfo.phone || '未设置' }}</span>
-              </div>
+              
+              
               <div class="info-item">
                 <span class="label">⚧ 性别：</span>
                 <span class="value">{{ getGenderText(userInfo.gender) }}</span>
@@ -60,12 +54,8 @@
               <el-form-item label="昵称">
                 <el-input v-model="editForm.nickname" />
               </el-form-item>
-              <el-form-item label="邮箱">
-                <el-input v-model="editForm.email" />
-              </el-form-item>
-              <el-form-item label="手机">
-                <el-input v-model="editForm.phone" />
-              </el-form-item>
+              
+              
               <el-form-item label="性别">
                 <el-radio-group v-model="editForm.gender">
                   <el-radio :label="1">男</el-radio>
@@ -178,8 +168,6 @@ const userInfo = computed(() => userStore.userInfo || {})
 const isEditing = ref(false)
 const editForm = ref({
   nickname: '',
-  email: '',
-  phone: '',
   gender: 0,
   age: null,
   height: null,
@@ -244,8 +232,6 @@ const getGenderText = (gender) => {
 const startEdit = () => {
   editForm.value = {
     nickname: userInfo.value.nickname || '',
-    email: userInfo.value.email || '',
-    phone: userInfo.value.phone || '',
     gender: userInfo.value.gender || 0,
     age: userInfo.value.age || null,
     height: userInfo.value.height || null,

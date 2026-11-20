@@ -1,6 +1,7 @@
 package com.fitness.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -8,7 +9,10 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体类
+ * 用户实体类（个人健康档案）
+ * <p>
+ * 纯个人系统：不含邮箱、手机号、角色等社交/权限字段，
+ * 只保留账号与健康相关数据。
  */
 @Data
 @TableName("user")
@@ -17,12 +21,12 @@ public class User {
     private Long id;
     
     /**
-     * 用户名
+     * 用户名（登录用）
      */
     private String username;
     
     /**
-     * 密码（加密存储）
+     * 密码（MD5 加密存储）
      */
     private String password;
     
@@ -30,16 +34,6 @@ public class User {
      * 昵称
      */
     private String nickname;
-    
-    /**
-     * 邮箱
-     */
-    private String email;
-    
-    /**
-     * 手机号
-     */
-    private String phone;
     
     /**
      * 头像URL
@@ -78,13 +72,10 @@ public class User {
     
     /**
      * 状态：0-禁用 1-正常
+     * <p>
+     * 纯个人系统仍保留该字段，用于账号自锁/停用，不做管理员管控。
      */
     private Integer status;
-    
-    /**
-     * 角色：0-普通用户 1-管理员
-     */
-    private Integer role;
     
     /**
      * 创建时间
