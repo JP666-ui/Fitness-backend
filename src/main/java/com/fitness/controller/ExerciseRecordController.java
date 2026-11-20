@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -56,9 +57,20 @@ public class ExerciseRecordController {
             record.setCalorie(calorie);
         }
         
-        // 运动时间兜底
+        // 日期与时间保持一致：
+        // 统计按 record_date 聚合；若补录历史数据，时间必须跟随日期，
+        // 否则所有补录记录都会显示为「录入当天」。
+        LocalDate recDate = record.getRecordDate();
+        if (recDate == null) {
+            recDate = LocalDate.now();
+            record.setRecordDate(recDate);
+        }
         if (record.getExerciseTime() == null) {
-            record.setExerciseTime(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            record.setExerciseTime(recDate.atTime(now.getHour(), now.getMinute()));
+        } else if (!record.getExerciseTime().toLocalDate().equals(recDate)) {
+            // 时间与日期冲突时，保留时分、修正日期
+            record.setExerciseTime(recDate.atTime(record.getExerciseTime().toLocalTime()));
         }
         
         exerciseRecordService.save(record);

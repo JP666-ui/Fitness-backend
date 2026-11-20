@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -90,8 +92,42 @@ public class FoodRecordController {
             foodRecord.setCalorie(unit * weight / 100);
         }
 
+        // 日期与时间必须保持一致：
+        // 统计接口按 record_time 聚合，若只设 record_date 而 record_time 走默认值，
+        // 所有补录的数据都会被算到「录入当天」，导致历史数据全部堆在一天。
+        LocalDate recordDate = foodRecord.getRecordDate();
+        if (recordDate == null) {
+            recordDate = LocalDate.now();
+            foodRecord.setRecordDate(recordDate);
+        }
+        // record_time 是 java.util.Date 类型
+        LocalDateTime now = LocalDateTime.now();
+        if (foodRecord.getRecordTime() == null) {
+            foodRecord.setRecordTime(toDate(recordDate.atTime(
+                    now.getHour(), now.getMinute(), now.getSecond())));
+        } else {
+            LocalDate timeDate = toLocalDate(foodRecord.getRecordTime());
+            if (!timeDate.equals(recordDate)) {
+                // 时间与日期冲突时，保留时分秒、把日期改成 record_date
+                LocalDateTime t = toLocalDateTime(foodRecord.getRecordTime());
+                foodRecord.setRecordTime(toDate(recordDate.atTime(t.toLocalTime())));
+            }
+        }
+
         foodRecordService.save(foodRecord);
         return Result.success(foodRecord);
+    }
+
+    private java.util.Date toDate(LocalDateTime ldt) {
+        return java.util.Date.from(ldt.atZone(java.time.ZoneId.systemDefault()).toInstant());
+    }
+
+    private LocalDate toLocalDate(java.util.Date d) {
+        return d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private LocalDateTime toLocalDateTime(java.util.Date d) {
+        return d.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
     }
 
     /**
