@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <!-- ============ 顶部：个人信息 ============ -->
+    <!-- ============ 顶部信息条 ============ -->
     <div class="hero">
       <div class="hero-left">
         <h1>个人健身计划与健康管理系统</h1>
@@ -26,16 +26,17 @@
       </div>
     </div>
 
-    <!-- ============ 四大功能块 ============ -->
+    <!-- ============ 三大类 ============ -->
     <div class="blocks">
-      <!-- 1. 个人基础信息 -->
-      <div class="block block-info" @click="goTo('/profile')">
-        <div class="block-head">
+      <!-- ========== 一、个人信息 ========== -->
+      <div class="block block-info">
+        <div class="block-head" @click="goTo('/profile')">
           <span class="block-icon">👤</span>
-          <div>
-            <h2>个人基础信息</h2>
-            <p>身体档案与健康评测</p>
+          <div class="head-text">
+            <h2>个人信息</h2>
+            <p>身体档案 · 健康评测</p>
           </div>
+          <el-icon class="head-arrow"><ArrowRight /></el-icon>
         </div>
         <div class="block-body">
           <div class="kv-grid">
@@ -44,25 +45,33 @@
               <span class="kv-val">{{ item.value }}</span>
             </div>
           </div>
-        </div>
-        <div class="block-foot">
-          <span>完善资料 · 查看健康评测</span>
-          <el-icon><ArrowRight /></el-icon>
+          <div class="entry-row">
+            <div class="entry" @click="goTo('/health')">
+              <span class="entry-icon">🏥</span>
+              <span class="entry-text">健康评测</span>
+              <span class="entry-val" v-if="assess.healthScore != null">{{ assess.healthScore }} 分</span>
+              <el-icon><ArrowRight /></el-icon>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- 2. 健康计划 -->
+      <!-- ========== 二、健身计划 ========== -->
       <div class="block block-plan">
-        <div class="block-head">
+        <div class="block-head" @click="goTo('/plan')">
           <span class="block-icon">🎯</span>
-          <div>
-            <h2>健康计划</h2>
-            <p>目标设定与每日记录</p>
+          <div class="head-text">
+            <h2>健身计划</h2>
+            <p>目标设定 · 每日记录</p>
           </div>
+          <el-icon class="head-arrow"><ArrowRight /></el-icon>
         </div>
         <div class="block-body">
           <div class="plan-summary" v-if="plan.planName">
-            <div class="plan-name">{{ plan.planName }}</div>
+            <div class="plan-top">
+              <span class="plan-name">{{ plan.planName }}</span>
+              <el-tag size="small" type="success" effect="plain">进行中</el-tag>
+            </div>
             <div class="plan-meta">
               <span v-if="plan.targetCalorie">目标 {{ plan.targetCalorie }} kcal/天</span>
               <span v-if="plan.dailyDeficit">缺口 {{ plan.dailyDeficit }} kcal</span>
@@ -78,61 +87,40 @@
               已进行 {{ plan.passedDays }} / {{ plan.totalDays }} 天
             </div>
           </div>
-          <div class="plan-empty" v-else>还没有进行中的计划</div>
+          <div class="plan-empty" v-else>还没有进行中的计划，点击卡片创建</div>
 
-          <div class="sub-entries">
-            <div class="sub-entry" @click.stop="goTo('/food')">
-              <span class="sub-icon">🍎</span>
-              <span class="sub-text">饮食记录</span>
-              <span class="sub-val">{{ today.intake || 0 }} kcal</span>
+          <div class="entry-row">
+            <div class="entry" @click="goTo('/food')">
+              <span class="entry-icon">🍎</span>
+              <span class="entry-text">饮食记录</span>
+              <span class="entry-val">{{ today.intake || 0 }} kcal</span>
+              <el-icon><ArrowRight /></el-icon>
             </div>
-            <div class="sub-entry" @click.stop="goTo('/exercise')">
-              <span class="sub-icon">🏃</span>
-              <span class="sub-text">运动记录</span>
-              <span class="sub-val">{{ today.burn || 0 }} kcal</span>
+            <div class="entry" @click="goTo('/exercise')">
+              <span class="entry-icon">🏃</span>
+              <span class="entry-text">运动记录</span>
+              <span class="entry-val">{{ today.burn || 0 }} kcal</span>
+              <el-icon><ArrowRight /></el-icon>
             </div>
-            <div class="sub-entry" @click.stop="goTo('/weight')">
-              <span class="sub-icon">⚖️</span>
-              <span class="sub-text">体重记录</span>
-              <span class="sub-val">{{ latestWeight ? latestWeight + ' kg' : '--' }}</span>
+            <div class="entry" @click="goTo('/weight')">
+              <span class="entry-icon">⚖️</span>
+              <span class="entry-text">体重记录</span>
+              <span class="entry-val">{{ latestWeight ? latestWeight + ' kg' : '--' }}</span>
+              <el-icon><ArrowRight /></el-icon>
             </div>
           </div>
-        </div>
-        <div class="block-foot" @click.stop="goTo('/plan')">
-          <span>查看/创建计划</span>
-          <el-icon><ArrowRight /></el-icon>
         </div>
       </div>
 
-      <!-- 3. AI 营养咨询 -->
-      <div class="block block-ai" @click="goTo('/consult')">
-        <div class="block-head">
-          <span class="block-icon">🤖</span>
-          <div>
-            <h2>AI 营养咨询</h2>
-            <p>智谱 GLM 智能问答</p>
+      <!-- ========== 三、健康管理 ========== -->
+      <div class="block block-manage">
+        <div class="block-head" @click="goTo('/statistics')">
+          <span class="block-icon">📈</span>
+          <div class="head-text">
+            <h2>健康管理</h2>
+            <p>AI 咨询 · 数据统计</p>
           </div>
-        </div>
-        <div class="block-body">
-          <div class="ai-preview">
-            <div class="ai-bubble">减脂期晚餐吃什么比较好？</div>
-            <div class="ai-bubble ai-reply">结合你的数据建议……</div>
-          </div>
-        </div>
-        <div class="block-foot">
-          <span>开始对话 · 获取个性化建议</span>
-          <el-icon><ArrowRight /></el-icon>
-        </div>
-      </div>
-
-      <!-- 4. 数据统计 -->
-      <div class="block block-stat" @click="goTo('/statistics')">
-        <div class="block-head">
-          <span class="block-icon">📊</span>
-          <div>
-            <h2>数据统计</h2>
-            <p>摄入 / 消耗 / 缺口趋势</p>
-          </div>
+          <el-icon class="head-arrow"><ArrowRight /></el-icon>
         </div>
         <div class="block-body">
           <div class="stat-row">
@@ -149,10 +137,21 @@
               <div class="stat-label">今日缺口</div>
             </div>
           </div>
-        </div>
-        <div class="block-foot">
-          <span>查看每日趋势分析</span>
-          <el-icon><ArrowRight /></el-icon>
+
+          <div class="entry-row">
+            <div class="entry" @click="goTo('/consult')">
+              <span class="entry-icon">🤖</span>
+              <span class="entry-text">AI 营养咨询</span>
+              <span class="entry-val muted">智谱 GLM</span>
+              <el-icon><ArrowRight /></el-icon>
+            </div>
+            <div class="entry" @click="goTo('/statistics')">
+              <span class="entry-icon">📊</span>
+              <span class="entry-text">数据统计</span>
+              <span class="entry-val muted">趋势分析</span>
+              <el-icon><ArrowRight /></el-icon>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -242,7 +241,19 @@ const loadAll = async () => {
 
   try {
     const r = await getCurrentPlan()
-    if (r.code === 200 && r.data) plan.value = r.data
+    if (r.code === 200 && r.data) {
+      // /plan/current 返回 { plan, progress, calorie }
+      const p = r.data.plan || r.data
+      const prog = r.data.progress || {}
+      plan.value = {
+        planName: p.planName,
+        targetCalorie: p.targetCalorie,
+        dailyDeficit: p.dailyDeficit,
+        totalDays: prog.totalDays,
+        passedDays: prog.passedDays,
+        timePercent: prog.percent,
+      }
+    }
   } catch { /* 静默 */ }
 
   try {
@@ -269,6 +280,8 @@ onMounted(loadAll)
   min-height: 100vh;
   background: #f0f2f5;
   padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* ---------- 顶部 ---------- */
@@ -316,20 +329,22 @@ onMounted(loadAll)
 }
 .logout-btn:hover { background: rgba(255, 255, 255, 0.28); color: #fff; }
 
-/* ---------- 四大块 ---------- */
+/* ---------- 三大类 ---------- */
 .blocks {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 18px;
+  align-items: start;
 }
 
-@media (max-width: 900px) { .blocks { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) {
+  .blocks { grid-template-columns: 1fr; }
+}
 
 .block {
   background: #fff;
   border-radius: 14px;
   padding: 20px 22px;
-  cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
@@ -340,31 +355,42 @@ onMounted(loadAll)
 
 .block-info { border-top-color: #409eff; }
 .block-plan { border-top-color: #67c23a; }
-.block-ai { border-top-color: #a06cd5; }
-.block-stat { border-top-color: #e6a23c; }
+.block-manage { border-top-color: #a06cd5; }
 
-.block-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.block-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
 .block-icon { font-size: 28px; }
-.block-head h2 { margin: 0 0 2px; font-size: 17px; color: #303133; }
-.block-head p { margin: 0; font-size: 12px; color: #909399; }
+
+.head-text { flex: 1; }
+
+.head-text h2 {
+  margin: 0 0 2px;
+  font-size: 17px;
+  color: #303133;
+}
+
+.head-text p { margin: 0; font-size: 12px; color: #909399; }
+
+.head-arrow { color: #c0c4cc; transition: transform 0.2s; }
+.block-head:hover .head-arrow { color: #409eff; transform: translateX(3px); }
 
 .block-body { flex: 1; }
 
-.block-foot {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f2f5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: #909399;
+/* 信息网格 */
+.kv-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
 }
-
-.block:hover .block-foot { color: #409eff; }
-
-/* 信息卡 */
-.kv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
 .kv {
   background: #f8f9fb;
@@ -376,50 +402,62 @@ onMounted(loadAll)
 .kv-label { display: block; font-size: 12px; color: #909399; margin-bottom: 4px; }
 .kv-val { font-size: 15px; font-weight: 600; color: #303133; }
 
-/* 计划卡 */
-.plan-summary { margin-bottom: 12px; }
-.plan-name { font-size: 15px; font-weight: 600; color: #303133; margin-bottom: 4px; }
-.plan-meta { font-size: 12px; color: #909399; display: flex; gap: 14px; }
-.plan-days { font-size: 12px; color: #909399; margin-top: 4px; }
-.plan-empty { color: #c0c4cc; font-size: 13px; padding: 10px 0; }
+/* 子入口 */
+.entry-row { display: flex; flex-direction: column; gap: 8px; }
 
-.sub-entries { display: flex; flex-direction: column; gap: 8px; }
-
-.sub-entry {
+.entry {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 12px;
+  padding: 10px 12px;
   background: #f8f9fb;
   border-radius: 8px;
+  cursor: pointer;
   transition: background 0.2s;
 }
 
-.sub-entry:hover { background: #eef5ff; }
-.sub-icon { font-size: 16px; }
-.sub-text { flex: 1; font-size: 13px; color: #606266; }
-.sub-val { font-size: 13px; font-weight: 600; color: #303133; }
+.entry:hover { background: #eef5ff; }
+.entry-icon { font-size: 16px; }
+.entry-text { flex: 1; font-size: 13px; color: #606266; }
+.entry-val { font-size: 13px; font-weight: 600; color: #303133; }
+.entry-val.muted { color: #909399; font-weight: 400; }
+.entry .el-icon { color: #c0c4cc; }
 
-/* AI 卡 */
-.ai-preview { display: flex; flex-direction: column; gap: 8px; }
+/* 计划摘要 */
+.plan-summary { margin-bottom: 14px; }
 
-.ai-bubble {
-  background: #f0f2f5;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #606266;
-  max-width: 88%;
+.plan-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
-.ai-reply { background: #f6f0ff; color: #7b5ea7; align-self: flex-end; }
+.plan-name { font-size: 15px; font-weight: 600; color: #303133; }
 
-/* 统计卡 */
-.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.plan-meta {
+  font-size: 12px;
+  color: #909399;
+  display: flex;
+  gap: 14px;
+}
+
+.plan-days { font-size: 12px; color: #909399; margin-top: 4px; }
+.plan-empty { color: #c0c4cc; font-size: 13px; padding: 12px 0 16px; }
+
+/* 统计三列 */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 4px 0;
+}
+
 .stat-item { text-align: center; }
 
 .stat-num {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: #303133;
   line-height: 1.2;
