@@ -86,16 +86,24 @@ public class FitnessPlanServiceImpl extends ServiceImpl<FitnessPlanMapper, Fitne
         Double targetWeight = user.getTargetWeight();
 
         // 计算计划周期
+        // 优先级：用户指定的周期 > 按健康速率推算（每周约 0.5kg）> 默认 30 天
         long days;
-        if ("loss".equals(planType) && targetWeight != null && user.getWeight() != null
+        Integer customDays = user.getPlanDays();
+        if (customDays != null && customDays > 0) {
+            // 用户指定了周期（如「三个月减 10kg」），直接采用
+            days = customDays;
+        } else if ("loss".equals(planType) && targetWeight != null && user.getWeight() != null
                 && user.getWeight() > targetWeight) {
-            // 按健康速度推算周期
+            // 未指定时按健康速度推算
             days = calorieCalculator.suggestDays(user, targetWeight);
         } else {
             days = 30;
         }
-        if (days <= 0 || days > 365) {
+        if (days <= 0) {
             days = 30;
+        }
+        if (days > 730) {
+            days = 730;
         }
 
         // 计算热量缺口与建议摄入

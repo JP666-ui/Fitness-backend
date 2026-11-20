@@ -69,7 +69,15 @@ public class User {
      * 每日目标热量(kcal)
      */
     private Integer dailyCalorieGoal;
-    
+
+    /**
+     * 计划周期（天）
+     * <p>
+     * 用户指定「多久达成目标」，如三个月填 90。
+     * 为 null 时系统按健康速率（每周约 0.5kg）自动推算。
+     */
+    private Integer planDays;
+
     /**
      * 状态：0-禁用 1-正常
      * <p>

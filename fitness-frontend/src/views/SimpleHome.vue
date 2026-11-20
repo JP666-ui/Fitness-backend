@@ -3,7 +3,7 @@
     <!-- ============ 顶部：个人信息 ============ -->
     <div class="hero">
       <div class="hero-left">
-        <h1>智能运动营养与健康评测系统</h1>
+        <h1>个人健身计划与健康管理系统</h1>
         <p class="greet">
           {{ greeting }}，{{ userStore.nickname || userStore.username || '访客' }}
         </p>

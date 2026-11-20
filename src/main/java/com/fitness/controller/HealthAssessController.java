@@ -276,6 +276,9 @@ public class HealthAssessController {
         meta.put("ageDiff", metabolicAge - age);
         meta.put("visceralFat", visceralFat);
         meta.put("visceralLevel", visceralLevel(visceralFat));
+        // 基础代谢的计算依据（Mifflin-St Jeor），供前端展示公式与代入值
+        meta.put("bmrFormula", "Mifflin-St Jeor");
+        meta.put("bmrDetail", bmrDetail(gender, age, height, weight, bmr));
         data.put("metabolic", meta);
 
         Map<String, Object> evaluation = new LinkedHashMap<>();
@@ -289,6 +292,8 @@ public class HealthAssessController {
                 ? assessService.healthLevel(nutritionScore) : "暂无数据");
         // 各维度分数，用于雷达图
         evaluation.put("dimensions", dimensions(bmi, bodyFat, visceralFat, muscleRatio, gender));
+        // 健康分的构成：各维度得分 × 权重，供前端逐项展示计算过程
+        evaluation.put("scoreBreakdown", scoreBreakdown(bmi, bodyFat, visceralFat, muscleRatio, gender, score));
         data.put("evaluation", evaluation);
 
         data.put("advice", adviceJson);
@@ -377,5 +382,80 @@ public class HealthAssessController {
         if (vf <= 9) return "标准";
         if (vf <= 14) return "偏高";
         return "过高";
+    }
+
+    /**
+     * 基础代谢计算明细
+     * <p>
+     * 展示公式、代入值与结果，让用户知道 1889 这个数字怎么来的。
+     */
+    private Map<String, Object> bmrDetail(int gender, int age, double height, double weight, int bmr) {
+        Map<String, Object> d = new LinkedHashMap<>();
+
+        boolean male = gender == 1;
+        // Mifflin-St Jeor: 10×体重 + 6.25×身高 - 5×年龄 + (男 +5 / 女 -161)
+        double wPart = 10 * weight;
+        double hPart = 6.25 * height;
+        double aPart = 5 * age;
+        double genderPart = male ? 5 : -161;
+
+        d.put("formula", male
+                ? "BMR = 10×体重(kg) + 6.25×身高(cm) − 5×年龄 + 5"
+                : "BMR = 10×体重(kg) + 6.25×身高(cm) − 5×年龄 − 161");
+        d.put("weightPart", Math.round(wPart * 10) / 10.0);
+        d.put("heightPart", Math.round(hPart * 10) / 10.0);
+        d.put("agePart", Math.round(aPart * 10) / 10.0);
+        d.put("genderPart", genderPart);
+        d.put("substituted", String.format(
+                "10×%.1f + 6.25×%.1f − 5×%d %s = %d kcal",
+                weight, height, age, (male ? "+ 5" : "− 161"), bmr));
+        d.put("result", bmr);
+        d.put("meaning", "静息状态下维持呼吸、心跳、体温等基本生命活动所需的最低能量");
+        return d;
+    }
+
+    /**
+     * 健康分构成明细
+     * <p>
+     * 四个维度各自打分，按权重加权求和，前端可逐项展示。
+     */
+    private Map<String, Object> scoreBreakdown(double bmi, double bodyFat, int visceralFat,
+                                               double muscleRatio, int gender, int total) {
+        Map<String, Object> d = new LinkedHashMap<>();
+
+        int s1 = bmiScore(bmi);
+        int s2 = bfScore(bodyFat, gender);
+        int s3 = vfScore(visceralFat);
+        int s4 = muscleScore(muscleRatio, gender);
+
+        List<Map<String, Object>> items = new ArrayList<>();
+        items.add(dimItem("体重指数 BMI", s1, 0.35, String.format("BMI %.1f", bmi),
+                "18.5–23.9 为满分区间"));
+        items.add(dimItem("体脂水平", s2, 0.30,
+                String.format("%.1f%%", bodyFat),
+                gender == 1 ? "男 10–20% 为满分区间" : "女 18–28% 为满分区间"));
+        items.add(dimItem("内脏脂肪", s3, 0.20, String.format("%d 级", visceralFat),
+                "≤9 级为满分区间"));
+        items.add(dimItem("肌肉量充足度", s4, 0.15, String.format("%.1f%%", muscleRatio),
+                gender == 1 ? "男 28–40% 为满分区间" : "女 22–34% 为满分区间"));
+
+        d.put("items", items);
+        d.put("total", total);
+        d.put("formula", "健康分 = BMI得分×35% + 体脂得分×30% + 内脏脂肪得分×20% + 肌肉量得分×15%");
+        d.put("note", "各维度先按区间线性打分（0-100），再加权求和");
+        return d;
+    }
+
+    private Map<String, Object> dimItem(String name, int score, double weight,
+                                        String actual, String ideal) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name", name);
+        m.put("score", score);
+        m.put("weight", weight);
+        m.put("weightPercent", Math.round(weight * 100));
+        m.put("actual", actual);
+        m.put("ideal", ideal);
+        m.put("contribution", Math.round(score * weight * 10) / 10.0);
+        return m;
     }
 }

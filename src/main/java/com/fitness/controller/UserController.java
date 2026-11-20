@@ -152,19 +152,25 @@ public class UserController {
         if (userInfo.getTargetWeight() != null) {
             user.setTargetWeight(userInfo.getTargetWeight());
         }
+        // 计划周期：用户指定「多久达成目标」（如三个月 = 90 天）
+        if (userInfo.getPlanDays() != null && userInfo.getPlanDays() > 0) {
+            user.setPlanDays(userInfo.getPlanDays());
+        }
 
         userService.updateById(user);
 
         Map<String, Object> data = new HashMap<>();
         data.put("user", user);
 
-        // 目标体重或当前体重发生变化时，自动重算热量缺口
+        // 目标体重、当前体重或计划周期发生变化时，自动重算热量缺口
         boolean targetChanged = userInfo.getTargetWeight() != null
                 && !userInfo.getTargetWeight().equals(oldTargetWeight);
         boolean weightChanged = userInfo.getWeight() != null
                 && !userInfo.getWeight().equals(oldWeight);
+        boolean daysChanged = userInfo.getPlanDays() != null
+                && userInfo.getPlanDays() > 0;
 
-        if (targetChanged || weightChanged) {
+        if (targetChanged || weightChanged || daysChanged) {
             Map<String, Object> recalculated = recalculatePlan(user);
             if (recalculated != null) {
                 data.put("recalculated", true);
@@ -217,9 +223,14 @@ public class UserController {
             int tdee = calorieCalculator.calculateTdee(user);
             int bmr = calorieCalculator.calculateBmr(user);
 
-            // 保持原有周期；若无结束日期则按健康速度推算
+            // 周期优先级：用户指定 > 保留原计划剩余周期 > 按健康速率推算
             long days;
-            if (plan.getEndDate() != null && plan.getEndDate().isAfter(LocalDate.now())) {
+            if (user.getPlanDays() != null && user.getPlanDays() > 0) {
+                // 用户指定了总周期，从今天起重新计时
+                days = user.getPlanDays();
+                plan.setStartDate(LocalDate.now());
+                plan.setEndDate(LocalDate.now().plusDays(days));
+            } else if (plan.getEndDate() != null && plan.getEndDate().isAfter(LocalDate.now())) {
                 days = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), plan.getEndDate());
             } else {
                 days = calorieCalculator.suggestDays(user, user.getTargetWeight());

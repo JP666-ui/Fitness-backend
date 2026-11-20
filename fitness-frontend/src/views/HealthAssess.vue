@@ -74,6 +74,18 @@
             <div class="side-item">
               <span class="side-label">基础代谢</span>
               <span class="side-val">{{ data.metabolic?.bmr }} kcal</span>
+              <el-tooltip placement="top" :show-after="150">
+                <template #content>
+                  <div class="tip-formula">
+                    <div class="tip-title">计算依据（Mifflin-St Jeor）</div>
+                    <div class="tip-code">{{ data.metabolic?.bmrDetail?.formula }}</div>
+                    <div class="tip-sub">代入数值：</div>
+                    <div class="tip-code">{{ data.metabolic?.bmrDetail?.substituted }}</div>
+                    <div class="tip-note">{{ data.metabolic?.bmrDetail?.meaning }}</div>
+                  </div>
+                </template>
+                <el-icon class="na-icon"><QuestionFilled /></el-icon>
+              </el-tooltip>
             </div>
             <div class="side-item">
               <span class="side-label">内脏脂肪</span>
@@ -87,6 +99,53 @@
           <div class="radar-wrap">
             <div ref="radarRef" class="radar-chart"></div>
           </div>
+        </div>
+      </el-card>
+
+      <!-- ============ 健康分构成 ============ -->
+      <el-card v-if="data.evaluation?.scoreBreakdown" shadow="never" class="section-card">
+        <template #header>
+          <div class="card-head-row">
+            <b>健康分构成</b>
+            <span class="hd-total">
+              总分 <b>{{ data.evaluation.scoreBreakdown.total }}</b>
+            </span>
+          </div>
+        </template>
+
+        <div class="formula-banner">
+          {{ data.evaluation.scoreBreakdown.formula }}
+        </div>
+
+        <el-table :data="data.evaluation.scoreBreakdown.items" size="small" border>
+          <el-table-column prop="name" label="评估维度" width="140" />
+          <el-table-column prop="actual" label="你的数值" width="110" align="center" />
+          <el-table-column prop="ideal" label="满分区间" min-width="180" />
+          <el-table-column label="维度得分" width="150" align="center">
+            <template #default="{ row }">
+              <el-progress
+                :percentage="row.score"
+                :stroke-width="12"
+                :color="dimColor(row.score)"
+                :show-text="false"
+              />
+              <span class="dim-score">{{ row.score }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="权重" width="80" align="center">
+            <template #default="{ row }">{{ row.weightPercent }}%</template>
+          </el-table-column>
+          <el-table-column label="加权贡献" width="100" align="center">
+            <template #default="{ row }">
+              <b class="contrib">{{ row.contribution }}</b>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div class="calc-note">
+          <el-icon><InfoFilled /></el-icon>
+          {{ data.evaluation.scoreBreakdown.note }}；
+          各维度「加权贡献」相加即为总分（四舍五入）。
         </div>
       </el-card>
 
@@ -243,6 +302,7 @@ const levelTagType = (l) => {
   return 'info'
 }
 const vfTagType = (l) => (l === '标准' ? 'success' : l === '偏高' ? 'warning' : 'danger')
+const dimColor = (s) => (s >= 85 ? '#67c23a' : s >= 65 ? '#409eff' : s >= 45 ? '#e6a23c' : '#f56c6c')
 const deltaClass = (d) => (d > 0 ? 'up' : d < 0 ? 'down' : 'flat')
 const fmtDelta = (d) => (d > 0 ? '+' + d : d < 0 ? String(d) : '0')
 
@@ -505,4 +565,47 @@ onUnmounted(() => {
 .trend-summary .flat { color: #909399; }
 
 .trend-chart { width: 100%; height: 300px; }
+
+/* 健康分构成 */
+.hd-total { color: #606266; font-size: 14px; }
+.hd-total b { font-size: 20px; color: #1f6fc0; margin-left: 4px; }
+
+.formula-banner {
+  background: #f4f8fe;
+  border-left: 4px solid #409eff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #409eff;
+  font-family: Consolas, Monaco, monospace;
+  margin-bottom: 14px;
+}
+
+.dim-score { margin-left: 8px; font-weight: 600; color: #303133; font-size: 13px; }
+.contrib { color: #1f6fc0; }
+
+.calc-note {
+  margin-top: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.7;
+}
+
+/* 基础代谢 tooltip 内的公式块 */
+.tip-formula { max-width: 340px; line-height: 1.7; }
+.tip-title { font-weight: 600; margin-bottom: 6px; }
+.tip-code {
+  font-family: Consolas, Monaco, monospace;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+.tip-sub { font-size: 12px; opacity: 0.75; margin-bottom: 4px; }
+.tip-note { font-size: 12px; opacity: 0.8; margin-top: 6px; }
 </style>

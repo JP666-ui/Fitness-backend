@@ -1,15 +1,11 @@
 -- ============================================================
--- 智能运动营养与健康评测系统 数据库初始化脚本
--- 生成方式：mysqldump（与线上库结构一致）
--- 定位：纯个人健康管理系统，无管理员/消息模块
--- 包含表：user / food_record / exercise_record / weight_record /
---         fitness_plan / common_food / user_ai_config /
---         nutrition_consult / health_assessment
--- 默认账号：test/123456  jp666/123456
+-- 个人健身计划与健康管理系统 数据库初始化脚本
+-- 生成方式：mysqldump
+-- 账号：jpan25/123456（25岁男 178cm 85kg->75kg）  test/123456  jp666/123456
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS `fitness_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `fitness_db`;
+CREATE DATABASE IF NOT EXISTS itness_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE itness_db;
 /*!40101 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
@@ -111,7 +107,7 @@ CREATE TABLE `fitness_plan` (
   PRIMARY KEY (`id`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COMMENT='健身计划表';
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COMMENT='健身计划表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -120,7 +116,7 @@ CREATE TABLE `fitness_plan` (
 
 LOCK TABLES `fitness_plan` WRITE;
 /*!40000 ALTER TABLE `fitness_plan` DISABLE KEYS */;
-INSERT INTO `fitness_plan` VALUES (2,3,'维持计划','maintain',70.00,5.00,2460,0,'2026-10-14','2026-12-30',1,'建议摄入 2460 kcal，保持均衡饮食与规律运动','2026-10-14 16:01:37','2026-10-14 17:08:19'),(9,2,'维持计划','maintain',NULL,NULL,2597,0,'2026-10-18','2026-11-17',1,'建议摄入 2597 kcal，保持均衡饮食与规律运动','2026-10-18 13:49:34','2026-10-18 13:49:34');
+INSERT INTO `fitness_plan` VALUES (2,3,'减脂计划','loss',75.00,9.90,1888,708,'2026-10-14','2026-12-30',1,'需减重 9.9kg，每日热量缺口 708 kcal，建议摄入 1888 kcal（TDEE 2596 kcal）','2026-10-14 16:01:37','2026-11-20 22:51:50'),(9,2,'维持计划','maintain',NULL,NULL,2597,0,'2026-10-18','2026-11-17',1,'建议摄入 2597 kcal，保持均衡饮食与规律运动','2026-10-18 13:49:34','2026-10-18 13:49:34'),(10,4,'减脂计划','loss',75.00,10.00,1984,550,'2026-11-20','2027-04-09',0,'需减重 10.0kg，每日热量缺口 550 kcal，建议摄入 1984 kcal（TDEE 2534 kcal），每周约减 0.50kg','2026-11-20 23:09:35','2026-11-20 23:09:34'),(11,4,'减脂计划','loss',75.00,10.00,1984,550,'2026-11-20','2027-04-09',1,'需减重 10.0kg，每日热量缺口 550 kcal，建议摄入 1984 kcal（TDEE 2534 kcal），每周约减 0.50kg','2026-11-20 23:09:35','2026-11-20 23:09:35');
 /*!40000 ALTER TABLE `fitness_plan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -248,6 +244,7 @@ CREATE TABLE `user` (
   `target_weight` decimal(5,2) DEFAULT NULL COMMENT '目标体重(kg)',
   `bmi` decimal(4,2) DEFAULT NULL COMMENT 'BMI指数',
   `daily_calorie_goal` int(11) DEFAULT '2000' COMMENT '每日热量目标(kcal)',
+  `plan_days` int(11) DEFAULT NULL COMMENT '计划周期(天)，NULL 则按健康速率自动推算',
   `status` int(11) DEFAULT '1' COMMENT '状态：0-禁用 1-启用',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -255,7 +252,7 @@ CREATE TABLE `user` (
   UNIQUE KEY `username` (`username`),
   KEY `idx_username` (`username`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -264,7 +261,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'admin','e10adc3949ba59abbe56e057f20f883e','管理员',NULL,1,30,175.00,70.00,NULL,NULL,2500,1,'2026-10-13 15:46:45','2026-10-26 22:26:34'),(2,'test','e10adc3949ba59abbe56e057f20f883e','jp',NULL,1,22,183.00,85.00,NULL,NULL,1800,1,'2026-10-13 15:46:45','2026-10-14 19:30:41'),(3,'jp666','e10adc3949ba59abbe56e057f20f883e','jp',NULL,1,22,183.00,74.90,NULL,NULL,2000,1,'2026-10-13 15:48:04','2026-10-26 22:41:45');
+INSERT INTO `user` VALUES (1,'admin','e10adc3949ba59abbe56e057f20f883e','管理员',NULL,1,30,175.00,70.00,NULL,NULL,2500,NULL,1,'2026-10-13 15:46:45','2026-10-26 22:26:34'),(2,'test','e10adc3949ba59abbe56e057f20f883e','jp',NULL,1,22,183.00,85.00,NULL,NULL,1800,NULL,1,'2026-10-13 15:46:45','2026-10-14 19:30:41'),(3,'jp666','e10adc3949ba59abbe56e057f20f883e','jp',NULL,1,22,183.00,84.90,75.00,NULL,2000,NULL,1,'2026-10-13 15:48:04','2026-10-26 22:41:45'),(4,'jpan25','e10adc3949ba59abbe56e057f20f883e','健身用户',NULL,1,25,178.00,85.00,75.00,NULL,2000,NULL,1,'2026-11-20 23:09:34','2026-11-20 23:09:34');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -340,4 +337,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-20 22:42:27
+-- Dump completed on 2026-11-20 23:15:04
